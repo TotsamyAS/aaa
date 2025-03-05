@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Загруженные документы</h1>
+    <div id="document-list">
+        {% for doc in documents %}
+        <div class="document-item">
+            <span>{{ doc }}</span>
+            <button class="delete-button" onclick="deleteDocument('{{ doc }}')">Удалить</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        async function deleteDocument(docName) {
+            if (confirm(`Вы уверены, что хотите удалить документ "${docName}"?`)) {
+                try {
+                    const response = await fetch(`/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ doc_name: docName }),
+                    });
+
+                    if (response.ok) {
+                        alert(`Документ "${docName}" успешно удалён.`);
+                        // Обновляем список документов на странице
+                        window.location.reload();
+                    } else {
+                        alert("Ошибка при удалении документа.");
+                    }
+                } catch (error) {
+                    console.error("Ошибка:", error);
+                }
+            }
+        }
+    </script>
+{% endblock %}

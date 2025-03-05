@@ -145,25 +145,40 @@ def upload_pdf_to_db(pdf_path, doc_name):
 
 
 def delete_pdf_from_db(doc_name):
+    # Проверяем, существует ли документ в document_name_collection
+    response = client.query(
+        collection_name="document_name_collection",
+        filter=f"doc_name == '{doc_name}'",
+        output_fields=["doc_name"],
+    )
+    if not response:
+        print(f"Документ '{doc_name}' не найден.")
+        return
+
     # Удаляем все записи с совпадающим doc_name
     client.delete(
         collection_name="document_db_collection",
         filter=f"doc_name == '{doc_name}'"
     )
+    print(
+        f"Документ '{doc_name}' успешно удалён из базы данных 'document_db_collection'.")
     client.delete(
         collection_name="document_name_collection",
         filter=f"doc_name == '{doc_name}'"
     )
-    print(f"Документ '{doc_name}' успешно удалён из базы данных.")
+    print(
+        f"Документ '{doc_name}' успешно удалён из базы данных 'document_name_collection'.")
 
 
-def get_uploaded_documents():
+def get_uploaded_documents(limit=1000, offset=0):
     """
     Возвращает список загруженных документов.
     """
     response = client.query(
         collection_name="document_name_collection",
         filter="",
+        offset=offset,  # Смещение
+        limit=limit,
         output_fields=["doc_name"],
     )
     return [item["doc_name"] for item in response]

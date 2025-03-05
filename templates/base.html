@@ -7,6 +7,25 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .delete-button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .delete-button:hover {
+            background-color: #cc0000;
+        }
+    </style>
 </head>
 <body>
     <main>

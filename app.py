@@ -63,21 +63,22 @@ def upload_pdf():
 
 @app.route("/delete", methods=["POST"])
 def delete_pdf():
-    doc_name = request.form.get("doc_name")
+    data = request.get_json()
+    doc_name = data.get("doc_name")
     if not doc_name:
         return jsonify({"error": "Название документа не указано"}), 400
 
     # Удаляем документ из базы данных
     delete_pdf_from_db(doc_name)
 
-    # Перенаправляем на страницу удаления с сообщением об успехе
-    return redirect(url_for("delete_page", message=f"Документ '{doc_name}' успешно удалён"))
+    # Возвращаем успешный ответ
+    return jsonify({"message": f"Документ '{doc_name}' успешно удалён"}), 200
 
 
 @app.route("/docs", methods=["GET"])
 def show_docs():
     documents = get_uploaded_documents()
-    return render_template("upload.html", documents=documents)
+    return render_template("documents.html", documents=documents)
 
 
 if __name__ == "__main__":
