@@ -1,5 +1,5 @@
-from pymilvus import MilvusClient, DataType, utility, connections
-from pdf_processor import extract_text_from_pdf, split_text_into_chunks
+from pymilvus import MilvusClient, DataType, utility, connections, Collection
+from modules.pdf_processor import extract_text_from_pdf, split_text_into_chunks
 from transformers import AutoTokenizer, AutoModel
 import numpy as np
 import torch
@@ -181,3 +181,26 @@ def get_uploaded_documents(limit=1000, offset=0):
         output_fields=["doc_name", "date_added"],  # Запрашиваем имя и дату
     )
     return [{"doc_name": item["doc_name"], "date_added": item["date_added"]} for item in response]
+
+
+def search_documents(query_embedding, top_k=3):
+    """
+    Ищет документы, релевантные запросу.
+    """
+    collection = Collection("document_db_collection")  # Название коллекции
+    search_params = {
+        "metric_type": "L2",  # Метрика для поиска
+        "params": {"nprobe": 10}  # Параметры поиска
+    }
+
+    # Поиск документов
+    results = collection.search(
+        data=[query_embedding],
+        anns_field="text_embedding",  # Поле с эмбеддингами
+        param=search_params,
+        limit=top_k,
+        output_fields=["text_content"]  # Поля, которые нужно вернуть
+    )
+
+    # Возвращаем тексты документов
+    return [hit.entity.get("text_content") for hit in results[0]]

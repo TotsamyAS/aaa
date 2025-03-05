@@ -4,10 +4,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datetime import datetime
 import os
 
-from database import upload_pdf_to_db, delete_pdf_from_db, initialize_collections, get_uploaded_documents, drop_collections
 
-import sys
-sys.path.insert(0, "modules")
+from modules.database import upload_pdf_to_db, delete_pdf_from_db, initialize_collections, get_uploaded_documents, drop_collections
+from modules.model_handler import generate_response
 
 
 app = Flask(__name__, template_folder="templates")
@@ -82,5 +81,19 @@ def delete_pdf():
     return jsonify({"message": f"Документ '{doc_name}' успешно удалён"}), 200
 
 
+@app.route("/send_message", methods=["POST"])
+def send_message():
+    data = request.get_json()
+    user_message = data.get("message")
+    if not user_message:
+        return jsonify({"error": "Сообщение не указано"}), 400
+
+    # Генерируем ответ с помощью модели
+    bot_response = generate_response(user_message)
+
+    # Возвращаем ответ
+    return jsonify({"message": bot_response})
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)

@@ -47,10 +47,10 @@ header {
 
 .logo {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    /* align-items: end; */
+    gap: 0.05rem;
     font-weight: 600;
-    font-size: 1.25rem;
+    font-size: 1.85rem;
     color: var(--primary-color);
 }
 
@@ -264,7 +264,7 @@ main {
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 180px);
+    height: calc(100vh - 240px);
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius);

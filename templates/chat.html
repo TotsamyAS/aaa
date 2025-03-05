@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Чат-бот | Док-Ассистент{% endblock %}
+{% block title %} AAAA | Чат-бот{% endblock %}
 
 {% block content %}
     <div class="chat-page">
@@ -27,6 +27,57 @@
 
 {% block scripts %}
     <script>
-        // Логика для чата будет здесь
+        // Функция для добавления сообщения в чат
+        function addMessage(sender, text) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'bot' ? 'bot-message' : 'user-message'}`;
+
+            messageDiv.innerHTML = `
+                <div class="message-avatar">
+                    ${sender === 'bot' ? '🤖' : '👤'}
+                </div>
+                <div class="message-content">
+                    <div class="message-text">${text}</div>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;  // Прокрутка вниз
+        }
+
+        // Обработка отправки сообщения
+        document.getElementById('sendMessageBtn').addEventListener('click', async () => {
+            const chatInput = document.getElementById('chatInput');
+            const message = chatInput.value.trim();
+
+            if (message) {
+                addMessage('user', message);  // Добавляем сообщение пользователя
+                chatInput.value = '';  // Очищаем поле ввода
+
+                // Отправляем сообщение на сервер
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addMessage('bot', data.message);  // Добавляем ответ бота
+                } else {
+                    alert('Ошибка при отправке сообщения.');
+                }
+            }
+        });
+
+        // Отправка сообщения по нажатию Enter
+        document.getElementById('chatInput').addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                document.getElementById('sendMessageBtn').click();
+            }
+        });
     </script>
 {% endblock %}
