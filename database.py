@@ -77,6 +77,8 @@ def initialize_collections():
             field_name="id", datatype=DataType.INT64, is_primary=True)
         name_schema.add_field(field_name="doc_name",
                               datatype=DataType.VARCHAR, max_length=128)
+        name_schema.add_field(field_name="date_added",  # Добавляем поле для даты
+                              datatype=DataType.VARCHAR, max_length=10)  # Формат ДД.ММ.ГГГГ
         # Добавляем фиктивное векторное поле
         name_schema.add_field(field_name="dummy_vector",
                               datatype=DataType.FLOAT16_VECTOR, dim=2)
@@ -100,14 +102,10 @@ def drop_collections():
     client.drop_collection("document_name_collection")
 
 
-def upload_pdf_to_db(pdf_path, doc_name):
+def upload_pdf_to_db(pdf_path, doc_name, date_added):
     """
     Загружает PDF-файл в базу данных.
     """
-
-    # Извлекаем название документа из имени файла
-    # Или используйте os.path.basename(pdf_path)
-    # doc_name = pdf_path.split("/")[-1]
 
     # Извлекаем текст из PDF
     text = extract_text_from_pdf(pdf_path)
@@ -123,8 +121,9 @@ def upload_pdf_to_db(pdf_path, doc_name):
     # Сохраняем название документа в document_name_collection
     client.insert(
         collection_name="document_name_collection",
-        data=[{"doc_name": doc_name, "dummy_vector": np.array(
-            [0.0, 0.0], dtype=np.float16)}],
+        data=[{"doc_name": doc_name, "date_added": date_added,
+               "dummy_vector": np.array(
+                   [0.0, 0.0], dtype=np.float16)}],
     )
 
     # Сохраняем чанки и их эмбеддинги в document_db_collection
@@ -172,13 +171,13 @@ def delete_pdf_from_db(doc_name):
 
 def get_uploaded_documents(limit=1000, offset=0):
     """
-    Возвращает список загруженных документов.
+    Возвращает список загруженных документов с их именами и датами добавления.
     """
     response = client.query(
         collection_name="document_name_collection",
         filter="",
         offset=offset,  # Смещение
         limit=limit,
-        output_fields=["doc_name"],
+        output_fields=["doc_name", "date_added"],  # Запрашиваем имя и дату
     )
-    return [item["doc_name"] for item in response]
+    return [{"doc_name": item["doc_name"], "date_added": item["date_added"]} for item in response]

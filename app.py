@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from pymilvus import connections, Collection
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from datetime import datetime
 import os
 
 from database import upload_pdf_to_db, delete_pdf_from_db, initialize_collections, get_uploaded_documents, drop_collections
@@ -17,18 +18,19 @@ initialize_collections()
 # Главная страница для загрузки PDF
 
 
-@app.route("/", methods=["GET"])
-def index():
-    return render_template("upload.html")
+# Главная страница (документы)
+@app.route("/")
+def documents():
+    # Получаем список документов из базы данных
+    documents = get_uploaded_documents()
+    return render_template("documents.html", documents=documents)
 
-# Страница для удаления PDF
+# Страница чата
 
 
-@app.route("/delete", methods=["GET"])
-def delete_page():
-    return render_template("delete.html")
-
-# Эндпоинт для загрузки PDF
+@app.route("/chat")
+def chat():
+    return render_template("chat.html")
 
 
 @app.route("/upload", methods=["POST"])
@@ -43,6 +45,9 @@ def upload_pdf():
     # Используем имя файла как doc_name
     doc_name = file.filename
 
+    # Генерируем дату в формате ДД.ММ.ГГГГ
+    date_added = datetime.now().strftime("%d.%m.%Y")
+
     # Сохраняем файл временно
     upload_folder = "uploads"
     os.makedirs(upload_folder, exist_ok=True)
@@ -50,21 +55,23 @@ def upload_pdf():
     file.save(file_path)
 
     # Загружаем PDF в базу данных
-    upload_pdf_to_db(file_path, doc_name)
+    upload_pdf_to_db(file_path, doc_name, date_added)
 
     # Удаляем временный файл
     os.remove(file_path)
 
     # Перенаправляем на главную страницу с сообщением об успехе
-    return redirect(url_for("index", message=f"Документ '{doc_name}' успешно загружен"))
+    print(f"Документ '{doc_name}' успешно загружен")
+    return redirect(url_for("documents", documents=get_uploaded_documents()))
 
 # Эндпоинт для удаления PDF
 
 
-@app.route("/delete", methods=["POST"])
+@app.route("/delete", methods=["DELETE"])
 def delete_pdf():
-    data = request.get_json()
-    doc_name = data.get("doc_name")
+    # Получаем doc_name из query-параметров
+    doc_name = request.args.get("doc_name")
+    # Возвращаем успешный ответ
     if not doc_name:
         return jsonify({"error": "Название документа не указано"}), 400
 
@@ -73,12 +80,6 @@ def delete_pdf():
 
     # Возвращаем успешный ответ
     return jsonify({"message": f"Документ '{doc_name}' успешно удалён"}), 200
-
-
-@app.route("/docs", methods=["GET"])
-def show_docs():
-    documents = get_uploaded_documents()
-    return render_template("documents.html", documents=documents)
 
 
 if __name__ == "__main__":

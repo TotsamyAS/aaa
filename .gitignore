@@ -4,9 +4,4 @@ __pycache__/
 
 volumes/
 
-volumes/milvus/
-
-volumes/milvus/etcd/
-
-volumes/milvus/etcd/member/snap/db
-volumes/milvus/etcd/member/wal/0000000000000000-0000000000000000.wal
+uploads/

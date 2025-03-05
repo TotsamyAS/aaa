@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Чат-бот | Док-Ассистент{% endblock %}
+
+{% block content %}
+    <div class="chat-page">
+        <div class="page-header">
+            <h1>Чат-бот ассистент</h1>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Сообщения чата будут здесь -->
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Задайте вопрос о документах...">
+                <button id="sendMessageBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        // Логика для чата будет здесь
+    </script>
+{% endblock %}
