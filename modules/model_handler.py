@@ -116,7 +116,7 @@ def generate_response(user_message):
         output_ids[len(inputs["input_ids"][0]):], skip_special_tokens=True)
     eval_time = time.time() - start_time
     logger.info(
-        f"Генерация ответа заняла {eval_time//60} минут, {eval_time - eval_time//60} секунд.")
+        f"Генерация ответа заняла {eval_time//60} минут, {eval_time%60} секунд.")
     logger.info(f"Ответ модели сгенерирован: {output}")
 
     # Добавляем ответ бота в диалог
