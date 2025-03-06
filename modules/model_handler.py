@@ -85,7 +85,6 @@ class Conversation:
         return prompt.strip()
 
 
-# Глобальная переменная для хранения диалога
 conversation = Conversation()
 
 
@@ -129,26 +128,4 @@ def generate_response(user_message):
 
 
 def generate_response_with_RAG(user_message):
-    # Векторизация запроса пользователя
-    query_embedding = get_embeddings([user_message]).cpu().numpy()
-
-    # Поиск релевантных документов
-    # Ищем 3 наиболее релевантных документа
-    relevant_docs = search_documents(query_embedding, top_k=3)
-
-    # Формируем контекст для модели
-    context = "\n".join(relevant_docs)
-    prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\nКонтекст:\n{context}\n\nВопрос: {user_message}\nОтвет:"
-
-    # Генерируем ответ с помощью модели
-    inputs = tokenizer(prompt, return_tensors="pt",
-                       add_special_tokens=False).to(device)
-    output_ids = model.generate(
-        **inputs, generation_config=generation_config)[0]
-    output = tokenizer.decode(
-        output_ids[len(inputs["input_ids"][0]):], skip_special_tokens=True)
-
-    # Добавляем ответ бота в диалог
-    conversation.add_bot_message(output)
-
-    return output
+    pass

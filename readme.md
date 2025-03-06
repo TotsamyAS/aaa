@@ -26,15 +26,26 @@ pip install -r requirements.txt
 
 # Запуск приложения
 
+## Quickstart
+
 ## Режим разработки
 
-1. Запускаем виртуальную срежду:
+1. Включить бд Milvus
+
+- milvus-standalone: порт 19530
+- embed etcd: порт 2370
+
+```
+./milvus_standalone.bat start
+```
+
+2. Запускаем виртуальную среду:
 
 ```{bash}
 .venv\Scripts\activate
 ```
 
-2. Запуск приложения:
+3. Запуск приложения:
 
 ```{bash}
 python app.py
@@ -42,11 +53,11 @@ python app.py
 
 Образ запустится на хосте `http://localhost:5000`
 
-3. Останавливаем приложение
+4. Останавливаем приложение
 
 Для этого служит сочетание клавиш `Ctrl + C`
 
-4. Сбросить БД
+5. Сбросить БД (опц.)
 
 ```{bash}
 python ./scripts/drop_collections.py
