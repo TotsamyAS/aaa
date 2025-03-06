@@ -115,10 +115,6 @@ def upload_pdf_to_db(pdf_path, doc_name, date_added):
     text = extract_text_from_pdf(pdf_path)
     chunks = split_text_into_chunks(text)
 
-    # for chunk in chunks:
-    #     logger.info(
-    #         f"Длина чанка: {len(chunk)} - нужно 1024  | А в UTF-8: {len(chunk.encode('utf-8'))}")
-
     # Генерируем эмбеддинги для каждого чанка
     embeddings = get_embeddings(chunks)
 
