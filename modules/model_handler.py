@@ -13,7 +13,7 @@ MODEL_NAME = "IlyaGusev/saiga_mistral_7b_lora"
 
 # Системный промпт
 DEFAULT_SYSTEM_PROMPT = (
-    "Ты — Сайга, русскоязычный автоматический ассистент. "
+    "Ты — AAA (Augmented Artificial Assistant), русскоязычный автоматический ассистент. "
     "Ты разговариваешь с людьми и помогаешь им находить информацию в документах. "
     "Используй в первую очередь факты из предоставленных документов для ответа на вопросы."
 )
@@ -85,7 +85,7 @@ conversation = Conversation()
 # Функция для генерации ответа с RAG
 
 
-def generate_response_with_rag(user_message):
+def generate_response(user_message):
     # Векторизация запроса пользователя
     query_embedding = get_embeddings([user_message]).cpu().numpy()
 
