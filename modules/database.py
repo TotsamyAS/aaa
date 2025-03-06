@@ -3,6 +3,10 @@ from modules.pdf_processor import extract_text_from_pdf, split_text_into_chunks
 from transformers import AutoTokenizer, AutoModel
 import numpy as np
 import torch
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 URI = "http://localhost:19530"
 TOKEN = "root:Milvus"
@@ -65,7 +69,7 @@ def initialize_collections():
             schema=chunk_schema,
             index_params=chunk_index_params,
         )
-        print("Коллекция 'document_db_collection' создана.")
+        logger.info("Коллекция 'document_db_collection' создана.")
 
     # Проверяем, существует ли коллекция для названий документов
     if not utility.has_collection("document_name_collection"):
@@ -94,7 +98,7 @@ def initialize_collections():
             schema=name_schema,
             index_params=name_index_params,
         )
-        print("Коллекция 'document_name_collection' создана.")
+        logger.info("Коллекция 'document_name_collection' создана.")
 
 
 def drop_collections():
@@ -112,7 +116,7 @@ def upload_pdf_to_db(pdf_path, doc_name, date_added):
     chunks = split_text_into_chunks(text)
 
     # for chunk in chunks:
-    #     print(
+    #     logger.info(
     #         f"Длина чанка: {len(chunk)} - нужно 1024  | А в UTF-8: {len(chunk.encode('utf-8'))}")
 
     # Генерируем эмбеддинги для каждого чанка
@@ -140,7 +144,7 @@ def upload_pdf_to_db(pdf_path, doc_name, date_added):
         data=data,
     )
 
-    print(f"Документ '{doc_name}' успешно загружен в базу данных.")
+    logger.info(f"Документ '{doc_name}' успешно загружен в базу данных.")
 
 
 def delete_pdf_from_db(doc_name):
@@ -151,7 +155,7 @@ def delete_pdf_from_db(doc_name):
         output_fields=["doc_name"],
     )
     if not response:
-        print(f"Документ '{doc_name}' не найден.")
+        logger.info(f"Документ '{doc_name}' не найден.")
         return
 
     # Удаляем все записи с совпадающим doc_name
@@ -159,13 +163,13 @@ def delete_pdf_from_db(doc_name):
         collection_name="document_db_collection",
         filter=f"doc_name == '{doc_name}'"
     )
-    print(
+    logger.info(
         f"Документ '{doc_name}' успешно удалён из базы данных 'document_db_collection'.")
     client.delete(
         collection_name="document_name_collection",
         filter=f"doc_name == '{doc_name}'"
     )
-    print(
+    logger.info(
         f"Документ '{doc_name}' успешно удалён из базы данных 'document_name_collection'.")
 
 
