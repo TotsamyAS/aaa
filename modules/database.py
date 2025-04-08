@@ -15,7 +15,7 @@ connections.connect("default", host="localhost", port="19530")
 
 client = MilvusClient(uri=URI, token=TOKEN)
 MODEL = (
-    "ai-forever/ruBert-base"  # Название модели из HuggingFace Models
+    "cointegrated/rubert-tiny2"  # Название модели из HuggingFace Models
 )
 INFERENCE_BATCH_SIZE = 64  # Бэтчи вывода модели
 
@@ -56,7 +56,7 @@ def initialize_collections():
         chunk_schema.add_field(field_name="doc_name",
                                datatype=DataType.VARCHAR, max_length=128)
         chunk_schema.add_field(field_name="text_embedding",
-                               datatype=DataType.FLOAT_VECTOR, dim=768)
+                               datatype=DataType.FLOAT_VECTOR, dim=312)
         chunk_schema.add_field(field_name="text_content",
                                datatype=DataType.VARCHAR, max_length=2048)  # макс. длина в 2 раза больше чанка, т.к. кириллица имеет кодировку в 2 байта, тогда 512 символов будет не превышать 1024 символа из utf-8
 
@@ -69,7 +69,7 @@ def initialize_collections():
             schema=chunk_schema,
             index_params=chunk_index_params,
         )
-        logger.info("Коллекция 'document_db_collection' создана.")
+        logger.info(f" Коллекция 'document_db_collection' создана.")
 
     # Проверяем, существует ли коллекция для названий документов
     if not utility.has_collection("document_name_collection"):
@@ -98,7 +98,7 @@ def initialize_collections():
             schema=name_schema,
             index_params=name_index_params,
         )
-        logger.info("Коллекция 'document_name_collection' создана.")
+        logger.info(f" Коллекция 'document_name_collection' создана.")
 
 
 def drop_collections():
@@ -151,7 +151,7 @@ def delete_pdf_from_db(doc_name):
         output_fields=["doc_name"],
     )
     if not response:
-        logger.info(f"Документ '{doc_name}' не найден.")
+        logger.info(f" Документ '{doc_name}' не найден.")
         return
 
     # Удаляем все записи с совпадающим doc_name
@@ -183,24 +183,5 @@ def get_uploaded_documents(limit=1000, offset=0):
     return [{"doc_name": item["doc_name"], "date_added": item["date_added"]} for item in response]
 
 
-def search_documents(query_embedding, top_k=3):
-    """
-    Ищет документы, релевантные запросу.
-    """
-    collection = Collection("document_db_collection")  # Название коллекции
-    search_params = {
-        "metric_type": "L2",  # Метрика для поиска
-        "params": {"nprobe": 10}  # Параметры поиска
-    }
-
-    # Поиск документов
-    results = collection.search(
-        data=[query_embedding],
-        anns_field="text_embedding",  # Поле с эмбеддингами
-        param=search_params,
-        limit=top_k,
-        output_fields=["text_content"]  # Поля, которые нужно вернуть
-    )
-
-    # Возвращаем тексты документов
-    return [hit.entity.get("text_content") for hit in results[0]]
+def semantic_search(query, top_k=3):
+    pass
