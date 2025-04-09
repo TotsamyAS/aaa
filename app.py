@@ -8,7 +8,6 @@ import os
 from modules.database import upload_pdf_to_db, delete_pdf_from_db, initialize_collections, get_uploaded_documents, drop_collections
 from modules.model_handler import generate_response, generate_response_with_RAG
 
-
 app = Flask(__name__, template_folder="templates")
 
 # Инициализация коллекций при запуске приложения
@@ -87,7 +86,8 @@ def send_message():
         return jsonify({"error": "Сообщение не указано"}), 400
 
     # Генерируем ответ с помощью модели
-    bot_response = generate_response_with_RAG(user_message)
+    bot_response = generate_response_with_RAG(
+        user_message, debug_mode=True, threshold=0.43)
 
     # Возвращаем ответ
     return jsonify({"message": bot_response})

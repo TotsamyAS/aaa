@@ -23,13 +23,19 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL)
 model = AutoModel.from_pretrained(MODEL)
 
 
-def get_embeddings(texts):
+def get_embeddings(texts, model_name="cointegrated/rubert-tiny2"):
     """
     Получает эмбеддинги для списка текстов.
     """
+    MODEL = (model_name)
+    INFERENCE_BATCH_SIZE = 64  # Бэтчи вывода модели
+
+    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    model = AutoModel.from_pretrained(MODEL)
+    print(f'Начинается получение эмбеддингов моделью {model_name}...')
     # Токенизация текстов
     inputs = tokenizer(texts, padding=True, truncation=True,
-                       return_tensors="pt", max_length=512)
+                       return_tensors="pt", max_length=1024)
 
     # Получение скрытых состояний от модели
     with torch.no_grad():
@@ -37,7 +43,7 @@ def get_embeddings(texts):
 
     # Усреднение скрытых состояний по всем токенам для получения эмбеддинга
     embeddings = outputs.last_hidden_state.mean(dim=1)
-
+    print('Получение эмбеддингов завершено')
     return embeddings
 
 
@@ -183,5 +189,42 @@ def get_uploaded_documents(limit=1000, offset=0):
     return [{"doc_name": item["doc_name"], "date_added": item["date_added"]} for item in response]
 
 
-def semantic_search(query, top_k=3):
-    pass
+def semantic_search(query,
+                    model_name: str = "cointegrated/rubert-tiny2",
+                    top_k=3,
+                    debug_mode=False):
+
+    if debug_mode:
+        print('---------------------------------------')
+        print(
+            f'Тестирование эмбеддинга запроса {query} с помощью {model_name}...')
+    MODEL = (model_name)
+    INFERENCE_BATCH_SIZE = 64
+
+    query_embedding = get_embeddings([query], model_name=model_name)
+
+    # Отключаем тензор от графа вычислений и преобразуем в numpy array
+
+    query_embedding = query_embedding.detach().numpy().astype(np.float32)
+
+    # Преобразуем в список списков (Milvus ожидает такой формат)
+    query_embedding = [query_embedding[0].tolist()]
+
+    search_params = {"metric_type": "COSINE", "params": {"nprobe": 10}}
+
+    results = client.search(
+        collection_name="document_db_collection",  # Название коллекции
+        data=query_embedding,  # Эмбеддинг запроса (список списков float)
+        anns_field="text_embedding",  # Поле с эмбеддингами
+        search_params=search_params,  # Параметры поиска
+        limit=top_k,  # Количество ближайших результатов
+        output_fields=["text_content", "doc_name"]  # Возвращаемые поля
+    )
+    # Вывод результатов
+    if debug_mode:
+        # Обрабатываем первый (и единственный) список результатов
+        for hit in results[0]:
+            print(
+                f" Расстояние: {round(hit['distance'], 4)} Текст: {hit['entity']['text_content']}")
+
+    return results[0] if results[0] else []

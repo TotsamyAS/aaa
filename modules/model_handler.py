@@ -96,7 +96,8 @@ class GGUFHandler:
             logger.error(f"Ошибка загрузки GGUF модели: {e}")
 
     def generate(self, prompt: str) -> str:
-        output = self.model(prompt, max_tokens=256, stop=["</s>"])
+        output = self.model(prompt, max_tokens=4096, stop=[
+                            "</s>"], temperature=0.7, top_p=0.9)
         return output['choices'][0]['text'].strip()
 
 
@@ -164,48 +165,69 @@ def generate_response_with_RAG(
         top_k=top_k,
         debug_mode=debug_mode
     )
-
+    logger.info(
+        f'семантический поиск нашёл {len(search_results)} ответов. начинаемм фильрацию через threshold...')
+    if debug_mode:
+        for i, hit in enumerate(search_results):
+            dist = hit['distance']
+            text = hit['entity']['text_content']
+            print(f'{i+1}) [{ dist }] - {text} ')
     # 2. Фильтрация результатов по порогу
     relevant_docs = [
         hit for hit in search_results
         if hit['distance'] >= threshold
     ]
+    logger.info(
+        f'через пороговое значение в {threshold} прошло {len(relevant_docs)} документов...')
 
     # 3. Формирование контекста для LLM
     context = ""
     if relevant_docs:
-        context = "\n\n".join([
-            f"Документ {i+1} (сходство: {hit['distance']:.3f}):\n{hit['entity']['text_content']}"
-            for i, hit in enumerate(relevant_docs)
-        ])
+        context = ""
+        for i, hit in enumerate(relevant_docs):
+            if hit['distance'] >= threshold:
+                hit_text = hit['entity']['text_content']
+                context += "\n\n" + \
+                    f"Документ {i+1} Текст: \n{hit_text}"
+            else:
+                break
         if debug_mode:
-            logger.info(f"Найдено {len(relevant_docs)} релевантных документов")
+            logger.info(f"Сформирован контекст: {context}")
 
     # 4. Формирование промпта в зависимости от наличия контекста
     if context:
+        logger.info(f'Переходим в промпт с контекстом')
         prompt = (
             f"<s>system\n{DEFAULT_SYSTEM_PROMPT}\n\n"
             f"Пользователь задал вопрос: {user_message}\n\n"
             f"Вот релевантная информация из документов:\n{context}\n\n"
-            "Используй эту информацию, чтобы дать точный ответ. Если в документах нет ответа, "
-            "скажи, что не нашел информации в документах, но попробуй ответить из своих знаний."
+            "Проверь эту информацию, чтобы дать точный ответ пользователю. В ней может и не быть нужнойинформации. Если в документах нет ответа, "
+            "обязательно скажи, что не нашел информации в документах, но попробуй ответить из своих знаний."
             "</s><s>bot\n"
         )
     else:
+        logger.info(f'Переходим в промпт без контекста:')
         prompt = (
             f"<s>system\n{DEFAULT_SYSTEM_PROMPT}\n\n"
             f"Пользователь задал вопрос: {user_message}\n\n"
-            "Я не нашел релевантной информации в документах. Ответь, используя свои знания. "
+            "Релевантной информации в документах не найлено. Скажи об этом пользователю и ответь, используя свои знания. "
             "Если не знаешь ответа, так и скажи.</s><s>bot\n"
         )
 
     # 5. Генерация ответа
     try:
+        logger.info('начало генерации ответа моделью...')
+        start_time = time.time()
         if model_type == "gguf":
+            if debug_mode:
+                logger.info(f'Промпт: {prompt}')
             response = gguf_handler.generate(prompt)
 
         # Пост-обработка ответа
         response = response.strip()
+        eval_time = time.time() - start_time
+        logger.info(
+            f"Генерация заняла {int(eval_time/60)} мин {eval_time%60:.2f} сек")
         if not response or response.lower() in ["не знаю", "не могу ответить"]:
             return "К сожалению, я не нашел подходящей информации ни в документах, ни в своих знаниях."
 
